@@ -42,6 +42,7 @@ class DataSaver:
 
         self.file.seek(self.current_pos, 0)
 
+
     def close(self):
         self.file.close()
 
@@ -85,9 +86,6 @@ class DataLoader:
         self.file.seek(self.path_list[self.index])
 
 
-
-
-
     def getItem(self):
         if self.load_into_memory:
             self.reload_if_needed()
@@ -98,6 +96,7 @@ class DataLoader:
             return item
         else:
             return self.load_from_file()
+
 
     def load_from_file(self):
         self.reload_if_needed()
@@ -124,18 +123,20 @@ class DataLoader:
 
         return item
 
+
     def reload_if_needed(self):
         if self.index >= self.max_items:
             self.index = 0
             if self.shuffle:
                 self.shuffle_data()
 
+
     def __len__(self):
         return self.max_items
 
+
     def getComment(self):
         return self.comment
-
 
 
     def shuffle_data(self):
