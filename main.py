@@ -14,9 +14,9 @@ data2 = [np.zeros((3,4,5), dtype=np.int64), np.ones((2,3,6), dtype=np.bool)]
 saver.save(data2)
 
 
-loader = DataLoader(path)
+loader = DataLoader(path, shuffle=True,random_seed=True, load_into_memory=True)
 
-for i in range(3):
+for i in range(10):
     out = loader.getItem()
     for o in out:
         print(o.shape, o.dtype, end=" ")

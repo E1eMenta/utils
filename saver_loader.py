@@ -47,7 +47,7 @@ class DataSaver:
 
 
 class DataLoader:
-    def __init__(self, path, shuffle=False, load_into_memory=False, max_ims=None, random_seed=False):
+    def __init__(self, path, shuffle=False, load_into_memory=False, max_items=None, random_seed=False):
         self.file = open(path, "rb")
         self.file.seek(0, 2)
         self.file_size = self.file.tell()
@@ -60,26 +60,47 @@ class DataLoader:
         bytes_annotation = self.file.read()
         self.path_list, self.discription_list, self.comment = pickle.loads(bytes_annotation)
 
-        if max_ims != None:
-            max_ims = max_ims if max_ims < len(self.path_list) else len(self.path_list)
-            self.path_list = self.path_list[:max_ims]
-            self.discription_list = self.path_list[:max_ims]
+        if max_items != None:
+            self.max_items = max_items if max_items < len(self.path_list) else len(self.path_list)
+            self.path_list = self.path_list[:self.max_items]
+            self.discription_list = self.path_list[:self.max_items]
         else:
-            self.max_ims = len(self.path_list)
+            self.max_items = len(self.path_list)
 
+        self.load_into_memory = load_into_memory
+        if load_into_memory:
+            self.shuffle = False
+            self.index = 0
+            self.file.seek(self.path_list[self.index])
+
+            self.data_in_memory = []
+            for idx in range(self.max_items):
+                self.data_in_memory.append(self.load_from_file())
+        
         self.shuffle = shuffle
         if shuffle:
             self.shuffle_data()
 
-        self.index = random.randint(0, max_ims - 2) if random_seed else 0
+        self.index = random.randint(0, self.max_items - 1) if random_seed else 0
         self.file.seek(self.path_list[self.index])
 
 
+
+
+
     def getItem(self):
-        if self.index >= self.max_ims:
-            self.index = 0
-            if self.shuffle:
-                self.shuffle_data()
+        if self.load_into_memory:
+            self.reload_if_needed()
+            item = self.data_in_memory[self.index]
+
+            self.index += 1
+
+            return item
+        else:
+            return self.load_from_file()
+
+    def load_from_file(self):
+        self.reload_if_needed()
 
         if self.shuffle:
             self.file.seek(self.path_list[self.index], 0)
@@ -103,8 +124,14 @@ class DataLoader:
 
         return item
 
+    def reload_if_needed(self):
+        if self.index >= self.max_items:
+            self.index = 0
+            if self.shuffle:
+                self.shuffle_data()
+
     def __len__(self):
-        return self.max_ims
+        return self.max_items
 
     def getComment(self):
         return self.comment
@@ -112,7 +139,10 @@ class DataLoader:
 
 
     def shuffle_data(self):
-        combined = list(zip(self.path_list, self.discription_list))
-        random.shuffle(combined)
+        if self.load_into_memory:
+            random.shuffle(self.data_in_memory)
+        else:
+            combined = list(zip(self.path_list, self.discription_list))
+            random.shuffle(combined)
 
-        self.path_list[:], self.discription_list[:] = zip(*combined)
+            self.path_list[:], self.discription_list[:] = zip(*combined)
